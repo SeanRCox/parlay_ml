@@ -1,0 +1,5 @@
+__pycache__
+src/model/basketball_reference_web_scraper
+src/model/data
+src/model/plots
+src/model/todo.txt

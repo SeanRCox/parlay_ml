@@ -5,8 +5,8 @@ import torch.optim as optim
 import torch.nn.init as init
 from torch_geometric.nn import GCNConv, GATConv
 
-from model.plots import plot_gmm
-from graphs import get_data
+from model.plot_distributions import plot_gmm
+from model.graph_data import get_data
 
 class GNN_MDN(torch.nn.Module):
     def __init__(self, num_nodes, embedding_dim, hidden_dimensions, num_mixtures):
@@ -28,8 +28,8 @@ class GNN_MDN(torch.nn.Module):
         super(GNN_MDN, self).__init__()
         self.embedding = nn.Embedding(num_nodes, embedding_dim)  # Embed Node IDS
         init.xavier_uniform_(self.embedding.weight)
-        self.conv_layer_1 = GATConv(embedding_dim, hidden_dimensions, heads=8, concat=True, dropout=0.6)  # First convulotional layer
-        self.conv_layer_2 = GATConv(hidden_dimensions * 8, hidden_dimensions, heads=1, concat=True, dropout=0.6)  # Second convlu/otional layer
+        self.conv_layer_1 = GATConv(embedding_dim, hidden_dimensions, heads=8, concat=True, dropout=0.6)  # First convolutional layer
+        self.conv_layer_2 = GATConv(hidden_dimensions * 8, hidden_dimensions, heads=1, concat=True, dropout=0.6)  # Second convolutional layer
         self.dropout = nn.Dropout(0.6)
         self.fully_connected_layer = nn.Linear(hidden_dimensions, hidden_dimensions)  # Linear fully connected layer
 
