@@ -15,6 +15,7 @@ class Unpickle_Games(pickle.Unpickler):
 def graphify_data():
     data = []
 
+    # Loop through file and get all games
     games = []
     with open('data/new_games.pkl', 'rb') as file:
         while True:

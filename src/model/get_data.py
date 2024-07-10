@@ -17,22 +17,36 @@ class Game:
         self.stats = stats_list
 
 
-def get_game_data():
-    game_file = open('data/game_data.pkl', 'ab')
-    player_file = open('data/player_id_nums.pkl', 'wb')
-        
-    seasons = [i for i in range(2019, 2025)]  # Using last 5 seasons (2019-2024)
+def get_game_data(first_season, last_season):
+    seasons = [i for i in range(first_season, last_season+1)]  # Using last 5 seasons (2019-2024)
 
-    games = []
     for year in seasons:
-        games.extend([scraper.season_schedule(season_end_year=year)])
+        print(f"Getting Data for {year}...")
+        games = []
+        while True:
+            try:
+                games.extend([scraper.season_schedule(season_end_year=year)])
+            except Exception as e:
+                print("Hit rate limit, waiting...")
+                time.sleep(300)
+            else: break
 
+        games = sum(games, [])  # flatten game list into individual games
+
+        with open(f"data/games/games_played_{year}.pkl", 'wb') as games_file:
+            pickle.dump(games, games_file)
+
+def create_player_data(first_season, last_season):
+    for year in range(first_season, last_season+1):
+         with open(f"data/games/games_played_{year}.pkl", 'rb') as games_file:
+            get_player_data(pickle.load(games_file), year)
+
+def get_player_data(games, year):
     days_with_games = []
     for game in games:
         game_day = (game["start_time"].month, game["start_time"].day, game["start_time"].year)
         if game_day not in days_with_games:
                 days_with_games.append(game_day)
-
 
     player_dict = {}  # For mapping players to their player ids. [name] = player_id
 
@@ -41,9 +55,7 @@ def get_game_data():
 
         print(f"Getting stats for games played on {m}/{d}/{y}...")
 
-        rate_limited = False
-
-        while not rate_limited:
+        while True:
             try:
                 all_box_scores = scraper.player_box_scores(day=d, month=m, year=y)  # Get all box scores for the given day
                 player_data = pd.DataFrame.from_dict(all_box_scores)  # Get the player data as a pandas dataframe
@@ -82,23 +94,27 @@ def get_game_data():
                     for _, row in box_score.iterrows():
                         if row['name'] not in player_dict.keys():
                             player_dict[row['name']] = len(player_dict.keys())+1
-                            pickle.dump(player_dict, player_file) # update all player dict
+                            with open('data/player_game_stats/player_id_nums.pkl', 'wb') as player_file:
+                                pickle.dump(player_dict, player_file) # update all player dict
 
                         player_id_list.append(player_dict[row['name']])  # Add a players ID to the ID list
                         player_stats_matrix.append([row['points'], row['rebounds'], row['assists']])
 
                     # Make a new game object and add it to the list
-                    pickle.dump((Game(player_id_list, player_stats_matrix)), game_file)
+                    with open(f'data/player_game_stats/player_game_stats_{year}.pkl', 'ab') as game_stats_file:
+                        pickle.dump((Game(player_id_list, player_stats_matrix)), game_stats_file)
 
             except KeyError as e:
                 print("No Games on this day...")
                 break
             except Exception as e:
                 print("Hit rate limit, waiting...")
-                time.sleep(60)
+                time.sleep(300)
+            else:
+                break
 
 def main(): 
-    get_game_data()
+    create_player_data(2019,2024)
 
 if __name__=="__main__": 
     main() 

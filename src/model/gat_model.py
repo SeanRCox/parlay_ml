@@ -111,9 +111,10 @@ def loss(mu, var, pi, y):
     entropy = -torch.sum(pi * torch.log(pi + 1e-10), dim=1).mean()
 
     entropy_weight = 0.1
+    
     total_loss = negative_log_likelihood - entropy_weight * entropy
 
-    return -total_log_likelihood
+    return total_loss
 
 def train(model, data_loader, epochs, learning_rate):
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
